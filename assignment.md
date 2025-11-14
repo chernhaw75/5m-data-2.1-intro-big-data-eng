@@ -16,6 +16,12 @@ Answer:
 
 ```python
 
+query = {"plot": {"$regex": r"^War ", "$options": "i"}}  # case-insensitive
+
+# Display the results
+for m in movies.find(query).sort("year", -1).limit(5):
+    print (m)
+
 ```
 
 ### Question 2
@@ -26,6 +32,17 @@ Answer:
 
 ```python
 
+pipeline = [
+    {"$group": {"_id": "$rated", "count": {"$sum": 1}}},
+    {"$sort": {"count": -1}}  # optional: sort by count descending
+]
+
+results = movies.aggregate(pipeline)
+
+for r in results:
+    print(f"Rated: {r['_id']}, Count: {r['count']}")
+
+
 ```
 
 ### Question 3
@@ -35,6 +52,37 @@ Question: Count the number of movies with 3 comments or more.
 Answer:
 
 ```python
+
+
+pipeline = [
+    {
+        "$lookup": {
+            "from": "comments",
+            "localField": "_id",
+            "foreignField": "movie_id",
+            "as": "movie_comments"
+        }
+    },
+    {
+        "$match": {
+            "$expr": {"$gt": [{"$size": "$movie_comments"}, 3]}
+        }
+    },
+    {
+        "$project": {
+            "_id": 0,
+            "title": 1,
+            "num_comments": {"$size": "$movie_comments"}
+        }
+    }
+   
+]
+
+results = db.movies.aggregate(pipeline)
+
+for movie in results:
+    print(movie)
+
 
 ```
 
